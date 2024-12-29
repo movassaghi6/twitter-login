@@ -1,8 +1,10 @@
 from fastapi import FastAPI
-from app.api.user import router as user_router
+from api import user
+import asyncio
 
 
 app = FastAPI()
 
-app.include_router(user_router)
+app.include_router(user.router)
+asyncio.create_task(user.create_consumer())
 

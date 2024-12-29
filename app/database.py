@@ -1,8 +1,8 @@
 import motor.motor_asyncio
 from motor.motor_asyncio import AsyncIOMotorClient
 from beanie import init_beanie
-from app.settings import DATABASE_HOST, DATABASE_NAME
-from app.models import User, Task
+from settings import DATABASE_HOST, DATABASE_NAME
+from models import User, Task
 
 
 async def start_mongo_client():
