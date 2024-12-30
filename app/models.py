@@ -1,11 +1,10 @@
 from pydantic import Field
 from typing import Optional
-from beanie import Document
-
+from beanie import Document, Indexed
 
 
 class User(Document):
-    username: str = Field(unique=True)
+    username: Indexed(str, unique=True)
     password: str
     phone_number: str = Field(unique=True)
     email: Optional[str] = None
