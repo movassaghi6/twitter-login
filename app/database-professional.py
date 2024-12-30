@@ -1,12 +1,12 @@
-from typing import List, Optional
 import motor.motor_asyncio
 from motor.motor_asyncio import AsyncIOMotorClient
 from beanie import init_beanie
 from settings import DATABASE_HOST, DATABASE_NAME
 from models import User, Task
 from typing import Callable
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
-import logging
+from logging
 
 '''
 async def start_mongo_client():
@@ -27,23 +27,6 @@ class MongoDB:
     """
     client: AsyncIOMotorClient = None
 
-    def get_database(self):
-        """
-        Get the database instance.
-        This method is called after the client is initialized.
-        """
-        if self.client is None:
-            raise Exception("MongoDB client is not initialized.")
-        return self.client.get_database(DATABASE_NAME)
-
-    async def get_user_by_username(self, username: str) -> Optional[User]:
-
-        # peform query using beanie
-        user = await User.find_one(User.username == username)
-        return user
-    
-    ##### method for create and get tasks should be add here too.
-
 
 # Create a global MongoDB instance
 mongo_db= MongoDB()
@@ -58,24 +41,17 @@ async def mongodb_startup(app: FastAPI) -> None:
     """
     logger.info("Connecting to MongoDB...")
     mongo_db.client = AsyncIOMotorClient(DATABASE_HOST)
-
-    # Log the client instance to ensure it is set
-    logger.info(f'MongoDB client initialized: {mongo_db.client}')
     
     # app.state is commonly used to store shared resources (e.g., database clients).
     # Attach the same intance to app.state
     app.state.mongo_client = mongo_db.client
 
     # Initialize Beanie ODM with your document models
-    try:
-        await init_beanie(
-            database=mongo_db.client.get_database(DATABASE_NAME),
-            document_models=[User, Task]
-        )
-        logger.info("MongoDB connection succeeded!")
-    except Exception as e:
-        logger.error(f'Error initializing Beanie: {e}')
-
+    await init_beanie(
+        database=mongo_db.client.get_database(DATABASE_NAME),
+        document_models=[User, Task]
+    )
+    logger.info("MongoDB connection succeeded!")
 
 
 async def mongodb_shutdown(app: FastAPI) -> None:
@@ -88,9 +64,7 @@ async def mongodb_shutdown(app: FastAPI) -> None:
     logger.info("Closing MongoDB connection...")
     if mongo_db.client:
         mongo_db.client.close()
-        logger.info("MongoDB connection closed!")
-    else:
-        logger.warning('MongoDB client was not initialized.')
+    logger.info("MongoDB connection closed!")
 
 
 def create_start_app_handler(app: FastAPI) -> Callable:
@@ -123,3 +97,24 @@ def create_stop_app_handler(app: FastAPI) -> Callable:
     return stop_app
 
 
+
+# Context Manager
+'''@asynccontextmanager
+async def get_mongodb():
+    """
+    Async context manager to get the shared MongoDB client from the global instance.
+
+    Yields:
+        db: The MongoDB database instance for use during the context.
+    """
+    try:
+        if mongo_db.client is None:
+            raise Exception("MongoDB client is not initialized.")
+        db = mongo_db.client.get_database("clean-database")
+        yield db
+    except Exception as e:
+        logger.error(f'Error: {e}')
+        raise'''
+
+
+    

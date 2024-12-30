@@ -1,7 +1,8 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from schemas import User
 from aiokafka import AIOKafkaProducer, AIOKafkaConsumer
 #from settings import loop
+from database import mongo_db
 from utils import parse_kafka_message
 import json
 
@@ -37,7 +38,20 @@ async def create_consumer():
     await consumer.start()
     try:
         async for msg in consumer:
-            parse_kafka_message(msg)
+            # get username from consumer's message
+            user = parse_kafka_message(msg).username
+
+            if mongo_db.client is None:
+                raise Exception("MongoDB client is not initialized.")
+            
+            # user from database 
+            user_in_db = await mongo_db.get_user_by_username(user)
+
+            if not user_in_db:
+                raise HTTPException(status_code=404, detail="User not found")
+            
+            return user_in_db
+        
 
     finally:
         await consumer.stop()

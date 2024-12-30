@@ -1,0 +1,20 @@
+[
+    {
+      "username": "john_doe",
+      "password": "password123",
+      "phone_number": "+1234567890",
+      "email": "john.doe@example.com"
+    },
+    {
+      "username": "jane_smith",
+      "password": "securepass456",
+      "phone_number": "+0987654321",
+      "email": "jane.smith@example.com"
+    },
+    {
+      "username": "alex_lee",
+      "password": "alexpassword789",
+      "phone_number": "+1122334455",
+      "email": null
+    }
+  ]
