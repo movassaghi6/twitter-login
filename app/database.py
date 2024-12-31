@@ -1,8 +1,8 @@
 from typing import Optional
 from motor.motor_asyncio import AsyncIOMotorClient
 from beanie import init_beanie
-from settings import DATABASE_HOST, DATABASE_NAME
-from models import User, Task
+from app.settings import DATABASE_HOST, DATABASE_NAME
+from app.models import User, Task
 from typing import Callable
 from fastapi import FastAPI
 import logging
@@ -34,6 +34,13 @@ class MongoDB:
         user = await User.find_one(User.username == username)
         return user
     
+    async def create_task(self, status: str) -> Task:
+        # Create a new task document with the given status
+        task = Task(status=status)
+        await task.create()
+        return str(task.id)    
+
+
 
 # Create a global MongoDB instance
 mongo_db= MongoDB()
@@ -65,6 +72,7 @@ async def mongodb_startup(app: FastAPI) -> None:
         logger.info("MongoDB connection succeeded!")
     except Exception as e:
         logger.error(f'Error initializing Beanie: {e}')
+
 
 
 async def mongodb_shutdown(app: FastAPI) -> None:
@@ -110,4 +118,5 @@ def create_stop_app_handler(app: FastAPI) -> Callable:
     async def stop_app() -> None:
         await mongodb_shutdown(app)
     return stop_app
+
 
