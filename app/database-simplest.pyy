@@ -1,0 +1,43 @@
+You could simplify the setup and make the database connection more implicit by directly creating the database connection when required. For example, you could connect to MongoDB directly in your API routes or in a more global scope.
+
+python
+Copy code
+from motor.motor_asyncio import AsyncIOMotorClient
+from beanie import init_beanie
+from settings import DATABASE_HOST, DATABASE_NAME
+from models import User, Task
+
+# Directly create MongoDB client (simplified version)
+client = AsyncIOMotorClient(DATABASE_HOST)
+db = client[DATABASE_NAME]
+
+# Initialize Beanie
+init_beanie(database=db, document_models=[User, Task])
+
+
+Option 3: Using Context Manager
+You could also use a context manager to manage the MongoDB client. This is especially useful if you want to ensure connections are properly cleaned up after use but without global startup/shutdown logic:
+
+python
+Copy code
+from motor.motor_asyncio import AsyncIOMotorClient
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def get_db_client():
+    client = AsyncIOMotorClient(DATABASE_HOST)
+    try:
+        yield client[DATABASE_NAME]
+    finally:
+        client.close()
+Pros:
+Clean and flexible: Automatically closes connections when leaving the context.
+Better resource management for short-lived connections.
+Simpler code without the need for explicit startup/shutdown handlers.
+Cons:
+Could add complexity if you need to use the database connection across multiple requests or app lifecycles.
+Context manager might not scale as well in high-demand production environments.
+Comparison:
+Startup/Shutdown Handlers are useful for larger, production-level applications where you need explicit control over your connections.
+The simplified connection approach works for smaller applications and prototypes but can become difficult to manage as your application scales.
+The context manager option strikes a balance between simplicity and proper resource management but might not be as flexible for long-lived connections.

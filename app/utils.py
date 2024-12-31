@@ -1,5 +1,5 @@
 import json
-from schemas import User
+from app.schemas import User
 
 
 def parse_kafka_message(message: str) -> User:

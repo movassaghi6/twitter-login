@@ -1,6 +1,6 @@
 from fastapi import FastAPI
-from api import user
-from database import create_start_app_handler, create_stop_app_handler
+from app.api import user
+from app.database import create_start_app_handler, create_stop_app_handler
 import asyncio
 
 

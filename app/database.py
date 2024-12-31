@@ -1,9 +1,8 @@
-from typing import List, Optional
-import motor.motor_asyncio
+from typing import Optional
 from motor.motor_asyncio import AsyncIOMotorClient
 from beanie import init_beanie
-from settings import DATABASE_HOST, DATABASE_NAME
-from models import User, Task
+from app.settings import DATABASE_HOST, DATABASE_NAME
+from app.models import User, Task
 from typing import Callable
 from fastapi import FastAPI
 import logging
@@ -42,7 +41,13 @@ class MongoDB:
         user = await User.find_one(User.username == username)
         return user
     
-    ##### method for create and get tasks should be add here too.
+    ##### method for create and get tasks should be add here too
+    async def create_task(self, status: str) -> Task:
+        # Create a new task document with the given status
+        task = Task(status=status)
+        await task.create()
+        return str(task.id)    
+
 
 
 # Create a global MongoDB instance
