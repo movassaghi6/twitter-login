@@ -1,14 +1,20 @@
 from fastapi import APIRouter, HTTPException
-from schemas import User
+from app.schemas import User
 from aiokafka import AIOKafkaProducer, AIOKafkaConsumer
-#from settings import loop
-from database import mongo_db
-from utils import parse_kafka_message
+from app.database import mongo_db
+from app.utils import parse_kafka_message
 import json
-
+import asyncio
 
 
 router = APIRouter()
+
+
+# Temporary store for task IDs
+task_id_store={}
+# An event which will be set, when task is ready
+task_ready_event = asyncio.Event()
+
 
 @router.post('/twitter-login')
 async def login_for_task_id(user_credentials: User):
@@ -22,9 +28,18 @@ async def login_for_task_id(user_credentials: User):
     try:
         # Serialize pydantic object into a dictionary
         user_data = user_credentials.model_dump()
+        username = user_data.get("username")
 
         await producer.send_and_wait("twitter_login_requests", user_data)
-        return {"status": "message sent"}
+
+        # wait for consumer to process and return task_id using an event
+        await task_ready_event.wait()
+
+        task_id = task_id_store.get(username)
+        if task_id:
+            return {"task_id": task_id}
+            
+        raise HTTPException(status_code=500, detail="Task ID not available, consumer may not have processed the message yet.")
     finally:
         await producer.stop()
 
@@ -49,10 +64,14 @@ async def create_consumer():
                 # user from database 
                 user_in_db = await mongo_db.get_user_by_username(user)
 
-                if not user_in_db:
-                    print(f"User {user} not found in database.")
-                else:
-                    print(f"User {user} successfully fetched from database.")
+                task_id = await mongo_db.create_task(status="success" if user_in_db else "failure")
+
+                # Store task_id using a key from the kafka message
+                task_id_store[user] = task_id
+
+                # Set the event to signal that the task is ready
+                task_ready_event.set()
+
             except Exception as e:
                 print(f"Error processing message: {e}")
     finally:
