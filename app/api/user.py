@@ -39,21 +39,22 @@ async def create_consumer():
     await consumer.start()
     try:
         async for msg in consumer:
-            # get username from consumer's message
-            user = parse_kafka_message(msg).username
+            try:
+                # get username from consumer's message
+                user = parse_kafka_message(msg).username
 
-            if mongo_db.client is None:
-                raise Exception("MongoDB client is not initialized.")
+                if mongo_db.client is None:
+                    raise Exception("MongoDB client is not initialized.")
             
-            # user from database 
-            user_in_db = await mongo_db.get_user_by_username(user)
+                # user from database 
+                user_in_db = await mongo_db.get_user_by_username(user)
 
-            if not user_in_db:
-                raise HTTPException(status_code=404, detail="User not found")
-            
-            return user_in_db
-        
-
+                if not user_in_db:
+                    print(f"User {user} not found in database.")
+                else:
+                    print(f"User {user} successfully fetched from database.")
+            except Exception as e:
+                print(f"Error processing message: {e}")
     finally:
         await consumer.stop()
     
