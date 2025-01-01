@@ -37,16 +37,24 @@ class MongoDB:
 
     async def get_user_by_username(self, username: str) -> Optional[User]:
 
-        # peform query using beanie
-        user = await User.find_one(User.username == username)
-        return user
+        try:
+            # Perform query using beanie
+            user = await User.find_one(User.username == username)
+            return user
+        except Exception as e:
+            logger.error(f"Error getting user by username: {e}")
+            return None
     
     ##### method for create and get tasks should be add here too
     async def create_task(self, status: str) -> Task:
-        # Create a new task document with the given status
-        task = Task(status=status)
-        await task.create()
-        return str(task.id)    
+        try:
+            # Create a new task document with the given status
+            task = Task(status=status)
+            await task.create()
+            return str(task.id)  
+        except Exception as e:
+            logger.error(f"Error creating task: {e}")
+            return None
 
 
 

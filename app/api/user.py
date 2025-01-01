@@ -62,7 +62,9 @@ async def create_consumer():
         async for msg in consumer:
             try:
                 # get username from consumer's message
-                user = parse_kafka_message(msg).username
+                parsed_message= parse_kafka_message(msg)
+                user = parsed_message.username
+
 
                 if mongo_db.client is None:
                     raise Exception("MongoDB client is not initialized.")
@@ -76,6 +78,7 @@ async def create_consumer():
                     # Create a failure task object
                     failure_task = Task(status="failure")
 
+
                     # insert task to the database
                     await mongo_db.create_task(failure_task)
 
@@ -87,7 +90,16 @@ async def create_consumer():
 
                     # insert task to the database
                     await mongo_db.create_task(success_task)'''
-                task_id = await mongo_db.create_task(status="success" if user_in_db else "failure")
+                # Check input credentials for login
+                if (
+                    user_in_db 
+                    and user_in_db.password == parsed_message.password 
+                    and user_in_db.phone_number == parsed_message.phone_number 
+                    and user_in_db.email == parsed_message.email
+                ):
+                    task_id = await mongo_db.create_task(status="success")
+                else:
+                    task_id = await mongo_db.create_task(status="failure")
 
                 # Store task_id using a key from the kafka message
                 task_id_store[user] = task_id
