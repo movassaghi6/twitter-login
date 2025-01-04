@@ -30,6 +30,9 @@ async def create_producer(user_credentials: User):
 
         await producer.send_and_wait("twitter_login_requests", user_data)
 
+        # Clear the event before waiting for it
+        task_ready_event.clear()
+
         # wait for consumer to process and return task_id using an event
         await task_ready_event.wait()
 
