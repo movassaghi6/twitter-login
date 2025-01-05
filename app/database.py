@@ -8,6 +8,7 @@ from fastapi import FastAPI
 import logging
 
 
+
 # Configure built-in logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -37,16 +38,24 @@ class MongoDB:
         except Exception as e:
             logger.error(f"Error getting user by username: {e}")
             return None
-    
+
     async def create_task(self, status: str) -> Task:
         try:
             # Create a new task document with the given status
             task = Task(status=status)
             await task.create()
-            return str(task.id)  
         except Exception as e:
             logger.error(f"Error creating task: {e}")
             return None
+        
+    async def get_task_id(self)-> Task:
+        try:
+            task= await Task.find().sort("-_id").limit(1).first_or_none()
+            return str(task.id)
+        except Exception as e:
+            logger.error(f"Error getting task from database. {e}")
+            return None
+
 
 
 # Create a global MongoDB instance
