@@ -8,8 +8,6 @@ import asyncio
 
 
 
-# Temporary store for task IDs
-task_id_store={}
 # An event which will be set, when task is ready
 task_ready_event = asyncio.Event()
 
@@ -26,21 +24,9 @@ async def create_producer(user_credentials: User):
     try:
         # Serialize pydantic object into a dictionary
         user_data = user_credentials.model_dump()
-        username = user_data.get("username")
 
         await producer.send_and_wait("twitter_login_requests", user_data)
 
-        # Clear the event before waiting for it
-        task_ready_event.clear()
-
-        # wait for consumer to process and return task_id using an event
-        await task_ready_event.wait()
-
-        task_id = task_id_store.get(username)
-        if task_id:
-            return {"task_id": task_id}
-            
-        raise HTTPException(status_code=500, detail="Task ID not available, consumer may not have processed the message yet.")
     finally:
         await producer.stop()
 
@@ -78,9 +64,6 @@ async def create_consumer():
                 else:
                     task_id = await mongo_db.create_task(status="failure")
 
-                # Store task_id using a key from the kafka message
-                task_id_store[user] = task_id
-
                 # Set the event to signal that the task is ready
                 task_ready_event.set()
 
@@ -89,4 +72,3 @@ async def create_consumer():
     finally:
         await consumer.stop()
     
-
