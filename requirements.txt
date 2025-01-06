@@ -3,3 +3,6 @@ uvicorn
 beanie
 motor
 aiokafka
+pyjwt
+passlib
+bcrypt
