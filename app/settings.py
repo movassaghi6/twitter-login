@@ -15,3 +15,8 @@ config = Config(env_file)
 # MongoDB database
 DATABASE_HOST: str = config("DATABASE_HOST")
 DATABASE_NAME: str = config("DATABASE_NAME")
+
+# Security
+SECRET_KEY= config("SECRET_KEY")
+ALGORITHM= config("ALGORITHM")
+ACCESS_TOKEN_EXPIRE_MINUTES= config("ACCESS_TOKEN_EXPIRE_MINUTES")
