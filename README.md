@@ -38,6 +38,9 @@
     ```
     DATABASE_HOST = "your-mongodb-connection-string"
     DATABASE_NAME = "your-database-name"
+    SECRET_KEY= "your-secret-key"
+    ALGORITHM= "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES= 30
     
     ```
 6. **run the application**:
