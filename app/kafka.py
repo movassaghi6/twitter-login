@@ -5,6 +5,7 @@ from app.database import mongo_db
 from app.utils import parse_kafka_message
 import json
 import asyncio
+from app.security import verify_password
 
 
 
@@ -60,7 +61,7 @@ async def create_consumer():
                 # Check input credentials for login
                 if (
                     user_in_db 
-                    and user_in_db.password == parsed_message.password 
+                    and verify_password(parsed_message.password, user_in_db.hashed_password) 
                     and user_in_db.phone_number == parsed_message.phone_number 
                     and user_in_db.email == parsed_message.email
                 ):

@@ -6,7 +6,7 @@ from beanie import Document, Indexed
 
 class User(Document):
     username: Indexed(str, unique=True)
-    password: str
+    hashed_password: str
     phone_number: str = Field(unique=True)
     email: Optional[str] = None
 
