@@ -5,9 +5,12 @@ from app.database import mongo_db
 from app.utils import parse_kafka_message
 import json
 import asyncio
+from app.security import verify_password
 
 
 
+# Temporary store for task IDs
+#task_id_store={}
 # An event which will be set, when task is ready
 task_ready_event = asyncio.Event()
 
@@ -24,11 +27,13 @@ async def create_producer(user_credentials: User):
     try:
         # Serialize pydantic object into a dictionary
         user_data = user_credentials.model_dump()
+        ##username = user_data.get("username")
 
         await producer.send_and_wait("twitter_login_requests", user_data)
 
     finally:
         await producer.stop()
+
 
 
 # Kafka Consumer
@@ -56,13 +61,16 @@ async def create_consumer():
                 # Check input credentials for login
                 if (
                     user_in_db 
-                    and user_in_db.password == parsed_message.password 
+                    and verify_password(parsed_message.password, user_in_db.hashed_password) 
                     and user_in_db.phone_number == parsed_message.phone_number 
                     and user_in_db.email == parsed_message.email
                 ):
                     task_id = await mongo_db.create_task(status="success")
                 else:
                     task_id = await mongo_db.create_task(status="failure")
+
+                # Store task_id using a key from the kafka message
+                #task_id_store[user] = task_id
 
                 # Set the event to signal that the task is ready
                 task_ready_event.set()
