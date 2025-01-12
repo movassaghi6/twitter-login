@@ -3,9 +3,9 @@ from fastapi import Depends, HTTPException, status
 from typing import Annotated
 from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
-from app.settings import SECRET_KEY, ALGORITHM
-from app.database import mongo_db
-from app.schemas import TokenData, UserSafe
+from ..core.settings import SECRET_KEY, ALGORITHM
+from ..db.database import mongo_db
+from ..schemas.user import TokenData, UserSafe
 import jwt
 from jwt.exceptions import InvalidTokenError
 

@@ -1,40 +1,12 @@
-from fastapi import HTTPException
-from app.schemas import User
-from aiokafka import AIOKafkaProducer, AIOKafkaConsumer
-from app.database import mongo_db
-from app.utils import parse_kafka_message
-import json
+from aiokafka import AIOKafkaConsumer
+from ...user_service.db.database import mongo_db
+from ..utils.message_parser import parse_kafka_message
 import asyncio
-from app.security import verify_password
+from ...user_service.core.security import verify_password
 
 
-
-# Temporary store for task IDs
-#task_id_store={}
 # An event which will be set, when task is ready
 task_ready_event = asyncio.Event()
-
-
-# Kafka Prodcuer
-async def create_producer(user_credentials: User):
-    
-    # create a producer instance
-    producer = AIOKafkaProducer(
-        bootstrap_servers="localhost:9092",
-        value_serializer=lambda v: json.dumps(v).encode('utf-8')) # Serialize values to JSON)
-    
-    await producer.start()
-    try:
-        # Serialize pydantic object into a dictionary
-        user_data = user_credentials.model_dump()
-        ##username = user_data.get("username")
-
-        await producer.send_and_wait("twitter_login_requests", user_data)
-
-    finally:
-        await producer.stop()
-
-
 
 # Kafka Consumer
 async def create_consumer():
@@ -80,18 +52,3 @@ async def create_consumer():
     finally:
         await consumer.stop()
     
-
-
-'''
-# generate a task id after consumer work is done.
-async def task_id_response():
-    
-    task_ready_event.clear()
-
-    await task_ready_event.wait()
-
-    task_id = await mongo_db.get_task_id()
-    
-    if task_id:
-        return {"task_id": task_id}
-    raise HTTPException(status_code=500, detail="there was an error retrieving the task ID from the database.")'''

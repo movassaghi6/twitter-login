@@ -1,14 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from aiokafka import AIOKafkaProducer
-from app.kafka import create_producer, task_ready_event
-from app.database import mongo_db
-from app.security import get_user_dep, create_access_token, authenticate_user
-from app.schemas import Token, UserSafe
+from ...kafka_service.kafka.producer import create_producer
+from ...kafka_service.kafka.consumer import task_ready_event
+from ..db.database import mongo_db
+from ..core.security import get_user_dep, create_access_token, authenticate_user
+from ..schemas.user import Token, UserSafe
 from typing import Annotated
 from datetime import timedelta
-from app.settings import ACCESS_TOKEN_EXPIRE_MINUTES
-
+from ..core.settings import ACCESS_TOKEN_EXPIRE_MINUTES
 
 
 

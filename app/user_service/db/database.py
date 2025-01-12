@@ -1,20 +1,13 @@
-import motor.motor_asyncio
+from typing import Optional
 from motor.motor_asyncio import AsyncIOMotorClient
 from beanie import init_beanie
-from settings import DATABASE_HOST, DATABASE_NAME
-from models import User, Task
+from ..core.settings import DATABASE_HOST, DATABASE_NAME
+from ..models.user import User, Task
 from typing import Callable
-from contextlib import asynccontextmanager
 from fastapi import FastAPI
-from logging
+import logging
 
-'''
-async def start_mongo_client():
-    # create motor client
-    client = AsyncIOMotorClient(DATABASE_HOST)
 
-    # Init beanie with user and task document classes.
-    await init_beanie(database=client[DATABASE_NAME], document_models=[User, Task])'''
 
 # Configure built-in logging
 logging.basicConfig(level=logging.INFO)
@@ -26,6 +19,43 @@ class MongoDB:
     MongoDB class to hold a single AsyncIOMotorClient instance for the application.
     """
     client: AsyncIOMotorClient = None
+
+    def get_database(self):
+        """
+        Get the database instance.
+        This method is called after the client is initialized.
+        """
+        if self.client is None:
+            raise Exception("MongoDB client is not initialized.")
+        return self.client.get_database(DATABASE_NAME)
+
+    async def get_user_by_username(self, username: str) -> Optional[User]:
+
+        try:
+            # Perform query using beanie
+            user = await User.find_one(User.username == username)
+            return user
+        except Exception as e:
+            logger.error(f"Error getting user by username: {e}")
+            return None
+
+    async def create_task(self, status: str) -> Task:
+        try:
+            # Create a new task document with the given status
+            task = Task(status=status)
+            await task.create()
+        except Exception as e:
+            logger.error(f"Error creating task: {e}")
+            return None
+        
+    async def get_task_id(self)-> Task:
+        try:
+            task= await Task.find().sort("-_id").limit(1).first_or_none()
+            return str(task.id)
+        except Exception as e:
+            logger.error(f"Error getting task from database. {e}")
+            return None
+
 
 
 # Create a global MongoDB instance
@@ -41,17 +71,24 @@ async def mongodb_startup(app: FastAPI) -> None:
     """
     logger.info("Connecting to MongoDB...")
     mongo_db.client = AsyncIOMotorClient(DATABASE_HOST)
+
+    # Log the client instance to ensure it is set
+    logger.info(f'MongoDB client initialized: {mongo_db.client}')
     
     # app.state is commonly used to store shared resources (e.g., database clients).
     # Attach the same intance to app.state
     app.state.mongo_client = mongo_db.client
 
     # Initialize Beanie ODM with your document models
-    await init_beanie(
-        database=mongo_db.client.get_database(DATABASE_NAME),
-        document_models=[User, Task]
-    )
-    logger.info("MongoDB connection succeeded!")
+    try:
+        await init_beanie(
+            database=mongo_db.client.get_database(DATABASE_NAME),
+            document_models=[User, Task]
+        )
+        logger.info("MongoDB connection succeeded!")
+    except Exception as e:
+        logger.error(f'Error initializing Beanie: {e}')
+
 
 
 async def mongodb_shutdown(app: FastAPI) -> None:
@@ -64,7 +101,9 @@ async def mongodb_shutdown(app: FastAPI) -> None:
     logger.info("Closing MongoDB connection...")
     if mongo_db.client:
         mongo_db.client.close()
-    logger.info("MongoDB connection closed!")
+        logger.info("MongoDB connection closed!")
+    else:
+        logger.warning('MongoDB client was not initialized.')
 
 
 def create_start_app_handler(app: FastAPI) -> Callable:
@@ -97,24 +136,3 @@ def create_stop_app_handler(app: FastAPI) -> Callable:
     return stop_app
 
 
-
-# Context Manager
-'''@asynccontextmanager
-async def get_mongodb():
-    """
-    Async context manager to get the shared MongoDB client from the global instance.
-
-    Yields:
-        db: The MongoDB database instance for use during the context.
-    """
-    try:
-        if mongo_db.client is None:
-            raise Exception("MongoDB client is not initialized.")
-        db = mongo_db.client.get_database("clean-database")
-        yield db
-    except Exception as e:
-        logger.error(f'Error: {e}')
-        raise'''
-
-
-    

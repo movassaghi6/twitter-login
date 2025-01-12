@@ -9,11 +9,6 @@ class User(BaseModel):
     email: str | None = None
 
 
-# The role of the dependency get_user_dep is to fetch an
-# authenticated user based on a JWT token.
-# After verifying the token, there's no need to include the password—the user
-# is already authenticated.so we better use a schema without password like below
-# for that function.
 # Schema for public or dependency use
 class UserSafe(BaseModel):
     username: str
