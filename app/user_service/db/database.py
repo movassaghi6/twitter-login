@@ -5,14 +5,13 @@ from ..core.settings import DATABASE_HOST, DATABASE_NAME
 from ..models.user import User, Task
 from typing import Callable
 from fastapi import FastAPI
-import logging
+from ..core.logger import setup_logging
 
 
 
-# Configure built-in logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
+# Set up logging
+loggers = setup_logging()
+logger = loggers["db"]
 
 class MongoDB:
     """
@@ -34,9 +33,13 @@ class MongoDB:
         try:
             # Perform query using beanie
             user = await User.find_one(User.username == username)
+            if user:
+                logger.info(f"User found: {username}")
+            else:
+                logger.warning(f"User not found: {username}")
             return user
         except Exception as e:
-            logger.error(f"Error getting user by username: {e}")
+            logger.error(f"Error getting user by username: {e}", exc_info=True)
             return None
 
     async def create_task(self, status: str) -> Task:
@@ -44,16 +47,21 @@ class MongoDB:
             # Create a new task document with the given status
             task = Task(status=status)
             await task.create()
+            logger.info(f"Task created with status: {status}")
         except Exception as e:
-            logger.error(f"Error creating task: {e}")
+            logger.error(f"Error creating task: {e}", exc_info=True)
             return None
         
     async def get_task_id(self)-> Task:
         try:
             task= await Task.find().sort("-_id").limit(1).first_or_none()
-            return str(task.id)
+            if task:
+                logger.info(f"Task ID retrieved: {task.id}")
+                return str(task.id)
+            else:
+                logger.warning("No Task found")
         except Exception as e:
-            logger.error(f"Error getting task from database. {e}")
+            logger.error(f"Error getting task from database: {e}", exc_info=True)
             return None
 
 
@@ -87,8 +95,7 @@ async def mongodb_startup(app: FastAPI) -> None:
         )
         logger.info("MongoDB connection succeeded!")
     except Exception as e:
-        logger.error(f'Error initializing Beanie: {e}')
-
+        logger.error(f'Error initializing Beanie: {e}', exc_info=True)
 
 
 async def mongodb_shutdown(app: FastAPI) -> None:
