@@ -3,14 +3,13 @@ from fastapi.security import OAuth2PasswordRequestForm
 from aiokafka import AIOKafkaProducer
 from ...kafka_service.kafka.producer import create_producer
 from ...kafka_service.kafka.consumer import task_ready_event
-from ..db.database import mongo_db
+from ..repository.Task import TaskRepo
 from ..core.security import get_user_dep, create_access_token, authenticate_user
 from ..schemas.user import Token, UserSafe
 from typing import Annotated
 from datetime import timedelta
 from ..core.settings import ACCESS_TOKEN_EXPIRE_MINUTES
 from ..core.logger import setup_logging
-
 
 
 # Set up logging
@@ -66,7 +65,7 @@ async def login_for_task_id(
         await task_ready_event.wait()
         
         logger.info("Task ready event received, retrieving task ID")
-        task_id = await mongo_db.get_task_id()
+        task_id = await TaskRepo.get_by_id()
 
         if task_id:
             logger.info(f"Successfully retrieved task ID: {task_id} for user {current_user.username}")

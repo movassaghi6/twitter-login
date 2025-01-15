@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from .user_service.api import user
-from .user_service.db.database import create_start_app_handler, create_stop_app_handler
+from .user_service.core.database import create_start_app_handler, create_stop_app_handler
 from .kafka_service.kafka.consumer import create_consumer
 from .user_service.utils.middleware import RateLimitMiddleware
 import asyncio

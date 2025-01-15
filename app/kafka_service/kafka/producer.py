@@ -4,10 +4,10 @@ import json
 from ..core.logger import setup_logging
 
 
-
 # Set up logging
 loggers = setup_logging()
 logger  = loggers["kafka-producer"]
+
 
 # Kafka Prodcuer
 async def create_producer(user_credentials: User):

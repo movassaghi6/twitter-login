@@ -4,12 +4,11 @@ from typing import Annotated
 from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
 from ..core.settings import SECRET_KEY, ALGORITHM
-from ..db.database import mongo_db
+from ..repository.User import UserRepo
 from ..schemas.user import TokenData, UserSafe
 import jwt
 from jwt.exceptions import InvalidTokenError
 from ..core.logger import setup_logging
-
 
 
 # Set up logging
@@ -65,7 +64,7 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
 # Authenticate a user by verifying username and password
 async def authenticate_user(username: str, password: str):
     logger.info(f"Authenticating user: {username}")
-    user = await mongo_db.get_user_by_username(username=username)
+    user = await UserRepo.get_by_username(username=username)
     if not user:
         logger.warning(f"Authentication failed: User not found - {username}")
         return False
@@ -96,7 +95,7 @@ async def get_user_dep(token: Annotated[UserSafe, Depends(oauth2_scheme)]):
         logger.warning("Token validation failed: Invalid token")
         raise credentials_exception
     
-    user = await mongo_db.get_user_by_username(token_data.username)
+    user = await UserRepo.get_by_username(token_data.username)
     if user is None:
         logger.warning(f"Token validation failed: User not found - {token_data.username}")
         raise credentials_exception

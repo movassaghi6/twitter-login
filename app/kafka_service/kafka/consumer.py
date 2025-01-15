@@ -1,8 +1,10 @@
 from aiokafka import AIOKafkaConsumer
-from ...user_service.db.database import mongo_db
 from ..utils.message_parser import parse_kafka_message
 import asyncio
 from ...user_service.core.security import verify_password
+from ...user_service.core.database import mongo_db
+from ...user_service.repository.User import UserRepo
+from ...user_service.repository.Task import TaskRepo
 from ..core.logger import setup_logging
 
 
@@ -37,7 +39,7 @@ async def create_consumer():
                     raise Exception("MongoDB client is not initialized.")
             
                 # Fetch user from database 
-                user_in_db = await mongo_db.get_user_by_username(user)
+                user_in_db = await UserRepo.get_by_username(user)
                 logger.debug(f"User fetched from database: {user_in_db}")
 
 
@@ -48,11 +50,11 @@ async def create_consumer():
                     and user_in_db.phone_number == parsed_message.phone_number 
                     and user_in_db.email == parsed_message.email
                 ):
-                    task_id = await mongo_db.create_task(status="success")
+                    task_id = await TaskRepo.create(status="success")
                     logger.info(f"Task created with status 'success' for user: {user}")
 
                 else:
-                    task_id = await mongo_db.create_task(status="failure")
+                    task_id = await TaskRepo.create(status="failure")
                     logger.info(f"Task created with status 'failure' for user: {user}")
 
                 # Set the event to signal that the task is ready
