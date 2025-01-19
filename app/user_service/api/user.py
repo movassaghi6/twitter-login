@@ -4,12 +4,13 @@ from aiokafka import AIOKafkaProducer
 from ...kafka_service.kafka.producer import create_producer
 from ...kafka_service.kafka.consumer import task_ready_event
 from ..repository.Task import TaskRepo
-from ..core.security import get_user_dep, create_access_token, authenticate_user
+from ..core.security import token_manager, authenticate_user, get_user_dep
 from ..schemas.user import Token, UserSafe
 from typing import Annotated
 from datetime import timedelta
 from ..core.settings import ACCESS_TOKEN_EXPIRE_MINUTES
 from ..core.logger import setup_logging
+
 
 
 # Set up logging
@@ -37,7 +38,7 @@ async def logic_for_access_token(
             )
         logger.info(f"Successful login for user: {form_data.username}")
         access_token_expires= timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-        access_token= create_access_token(
+        access_token= token_manager.create_access_token(
             data={"sub": user.username}, expires_delta= access_token_expires
         )
         return Token(access_token=access_token, token_type="bearer")

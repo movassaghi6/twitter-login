@@ -1,9 +1,8 @@
 from aiokafka import AIOKafkaConsumer
 from ..utils.message_parser import parse_kafka_message
 import asyncio
-from ...user_service.core.security import verify_password
+from ...user_service.core.security import password_manager, user_repo
 from ...user_service.core.database import mongo_db
-from ...user_service.repository.User import UserRepo
 from ...user_service.repository.Task import TaskRepo
 from ..core.logger import setup_logging
 
@@ -39,14 +38,14 @@ async def create_consumer():
                     raise Exception("MongoDB client is not initialized.")
             
                 # Fetch user from database 
-                user_in_db = await UserRepo.get_by_username(user)
+                user_in_db = await user_repo.get_by_username(username=user)
                 logger.debug(f"User fetched from database: {user_in_db}")
 
 
                 # Check input credentials for login
                 if (
                     user_in_db 
-                    and verify_password(parsed_message.password, user_in_db.hashed_password) 
+                    and password_manager.verify_password(parsed_message.password, user_in_db.hashed_password) 
                     and user_in_db.phone_number == parsed_message.phone_number 
                     and user_in_db.email == parsed_message.email
                 ):
